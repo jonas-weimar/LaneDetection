@@ -1,0 +1,2 @@
+Best Results yet: python3 index.py -v 1 -t 25 -m 40 -g 90
+python index.py -t 30 -l 30 -m 30 -g 40
