@@ -54,30 +54,6 @@ programSettings = {
 }
 
 #
-# This function detects cars based on a cascade classifier
-# using a pre trained set saved in car_cascade.xml. The function
-# uses a multiscale algorithm on the provided frame to identify
-# all cascades that look like cars.
-#
-
-def detectCars(frame):
-	cars_cascade = cv2.CascadeClassifier('weights/car_cascade.xml')
-	cars = cars_cascade.detectMultiScale(frame, 1.07, 3)
-	return cars
-
-#
-# This function detects persons based on a cascade classifier
-# using a pre trained set saved in person_cascade.xml. The function
-# uses a multiscale algorithm on the provided frame to identify
-# all cascades that look like persons.
-#
-
-def detectPersons(frame):
-	person_cascade = cv2.CascadeClassifier('weights/person_cascade.xml')
-	persons = person_cascade.detectMultiScale(frame, 1.07, 3)
-	return persons
-
-#
 # Instance of the VideoCapture object. Based on this instance
 # the frames are picked on which the caluclations are performed
 # on. Note: 1 is EpocCam; 3 is CamTwist
@@ -85,6 +61,7 @@ def detectPersons(frame):
 
 cap = cv2.VideoCapture(
 	programSettings.get("cameraIdentificationNumber")
+	# 'tests/testVideos/IMG_2439.MOV'
 )
 
 #
@@ -106,6 +83,7 @@ normalizedFrameSize = (
 bisectionLineYAxis = int(normalizedFrameSize[0] * .5)
 bisectionLineXAxis = int(normalizedFrameSize[1] * .5)
 steeringAdvisorySectionLine = int(normalizedFrameSize[1] * .87)
+detecionLineYCoordinate = int((steeringAdvisorySectionLine + int(normalizedFrameSize[1] * .7)) / 2)
 
 #
 # The lane detection takes place in a trapezeoid shaped area as
@@ -115,20 +93,36 @@ steeringAdvisorySectionLine = int(normalizedFrameSize[1] * .87)
 
 polygonStencil = np.array([
 	[int(normalizedFrameSize[0] * .2), steeringAdvisorySectionLine],
-	[int(normalizedFrameSize[0] * .45), int(normalizedFrameSize[1] * .7)],
-	[int(normalizedFrameSize[0] * .55), int(normalizedFrameSize[1] * .7)],
+	[int(normalizedFrameSize[0] * .4), int(normalizedFrameSize[1] * .7)],
+	[int(normalizedFrameSize[0] * .6), int(normalizedFrameSize[1] * .7)],
 	[int(normalizedFrameSize[0] * .8), steeringAdvisorySectionLine]
 ])
 
-showPolygonStencil = False
+showPolygonStencil = True
 polygonStencilAsInt32 = np.int32([polygonStencil])
 
 #
-# As long as the camera connection is opened, every frame is
+# This funtion returns an x value for every line that
+# goes through the given points at the given y value.
+# Mathematically 'y = m(x - x1) + y1' solved for x
+#
+
+def determineXFromPointsAndY(pts, y):
+			x1, y1, x2, y2 = pts
+			lineGradient = (y2 - y1) / (x2 - x1)
+			return ((y - y1) + (lineGradient * x1)) / lineGradient
+
+#
+# As long as the camera connection is opened, every second frame is
 # getting picked, grayscaled and further treated and analysed.
 #
 
+frameCounter = 0
 while(cap.isOpened()):
+	if frameCounter % 2 == 0:
+		frameCounter = frameCounter + 1
+		continue
+
 	retval, frame = cap.read()
 
 	if retval != True:
@@ -136,20 +130,6 @@ while(cap.isOpened()):
 
 	frame = cv2.resize(frame, normalizedFrameSize)
 	grayScaledFrame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-	#
-	# If the right flags were set when starting the program
-	# the detection algorithms wil try and detect the flagged
-	# objects on the frame.
-	#
-
-	detectedObjects = []
-
-	if programSettings.get("detectCars"):
-		detectedObjects.append([ "Car", detectCars(frame), (255, 0, 0) ])
-
-	if programSettings.get("detectPersons"):
-		detectedObjects.append([ "Person", detectPersons(frame), (242, 7, 234) ])
 
 	#
 	# To detect the lane we merge the frame with a mask. This
@@ -190,21 +170,41 @@ while(cap.isOpened()):
 				temporaryFilteredLines.append(line)
 
 		houghLinesProbabilityResult = temporaryFilteredLines
+
+		#
+		# DEVELOP
+		#
 		
+		leftXValues = []
+		rightXValues = []
+		for line in houghLinesProbabilityResult:
+			if line[0][0] < bisectionLineYAxis:
+				leftXValues.append(
+					determineXFromPointsAndY(line[0], detecionLineYCoordinate)
+				)
+			else:
+				rightXValues.append(
+					determineXFromPointsAndY(line[0], detecionLineYCoordinate)
+				)
+
+		leftXAverage = int(sum(leftXValues) / len(leftXValues))
+		rightXAverage = int(sum(rightXValues) / len(rightXValues))
+
 		#
 		# To calculate the approx. lane middle, we take the average of four
 		# X values of our detected lines predicted by the Hough Lines
 		# algortihm.
 		#
 
-		leftMinX = min(line[0][0] for line in filter(lambda i: i[0][0] < bisectionLineYAxis, houghLinesProbabilityResult))
-		rightMinX = min(line[0][0] for line in filter(lambda i: i[0][0] > bisectionLineYAxis, houghLinesProbabilityResult))
-		leftMaxX = max(line[0][2] for line in filter(lambda i: i[0][0] < bisectionLineYAxis, houghLinesProbabilityResult))
-		rightMaxX = max(line[0][2] for line in filter(lambda i: i[0][0] > bisectionLineYAxis, houghLinesProbabilityResult))
+		# leftMinX = min(line[0][0] for line in filter(lambda i: i[0][0] < bisectionLineYAxis, houghLinesProbabilityResult))
+		# rightMinX = min(line[0][0] for line in filter(lambda i: i[0][0] > bisectionLineYAxis, houghLinesProbabilityResult))
+		# leftMaxX = max(line[0][2] for line in filter(lambda i: i[0][0] < bisectionLineYAxis, houghLinesProbabilityResult))
+		# rightMaxX = max(line[0][2] for line in filter(lambda i: i[0][0] > bisectionLineYAxis, houghLinesProbabilityResult))
 		
-		approximateLaneMiddle = int(sum([
-			leftMinX, leftMaxX, rightMinX, rightMaxX
-		]) / 4)
+		# approximateLaneMiddle = int(sum([
+		# 	leftMinX, leftMaxX, rightMinX, rightMaxX
+		# ]) / 4)
+		approximateLaneMiddle = int((leftXAverage + rightXAverage) / 2)
 		
 		#
 		# Draw the detected lines (lane describing lines) onto the frame
@@ -223,18 +223,24 @@ while(cap.isOpened()):
 		#
 
 		carPositionIndicationLine = [
-			(bisectionLineYAxis, int((steeringAdvisorySectionLine + bisectionLineXAxis) / 2)),
+			(bisectionLineYAxis, detecionLineYCoordinate),
 			(bisectionLineYAxis, steeringAdvisorySectionLine)
 		]
-
 		carLaneDistanceLine = [
-			(bisectionLineYAxis, int((steeringAdvisorySectionLine + bisectionLineXAxis) / 2)),
-			(approximateLaneMiddle, int((steeringAdvisorySectionLine + bisectionLineXAxis) / 2))
+			(bisectionLineYAxis, detecionLineYCoordinate),
+			(approximateLaneMiddle, detecionLineYCoordinate)
 		]
-
 		laneCenterIndicationLine = [
 			(approximateLaneMiddle, carLaneDistanceLine[0][1] - 15),
 			(approximateLaneMiddle, carLaneDistanceLine[0][1] + 15)
+		]
+		leftIndicationLine = [
+			(leftXAverage, carLaneDistanceLine[0][1] - 25),
+			(leftXAverage, carLaneDistanceLine[0][1] + 25)
+		]
+		rightIndicationLine = [
+			(rightXAverage, carLaneDistanceLine[0][1] - 25),
+			(rightXAverage, carLaneDistanceLine[0][1] + 25)
 		]
 
 		#
@@ -245,6 +251,8 @@ while(cap.isOpened()):
 		cv2.line(frame, carLaneDistanceLine[0], carLaneDistanceLine[1], (255, 255, 255), thickness=2)
 		cv2.line(frame, carPositionIndicationLine[0], carPositionIndicationLine[1], (0, 255, 255), thickness=2)
 		cv2.line(frame, laneCenterIndicationLine[0], laneCenterIndicationLine[1], (0, 255, 0), thickness=2)
+		cv2.line(frame, leftIndicationLine[0], leftIndicationLine[1], (0, 255, 255), thickness=2)
+		cv2.line(frame, rightIndicationLine[0], rightIndicationLine[1], (0, 255, 255), thickness=2)
 
 		#
 		# Additionally to the line indication we draw a steering advisory
@@ -260,19 +268,9 @@ while(cap.isOpened()):
 	except TypeError as e:
 		print(e)
 		pass
-
-	# polygonCoordinatesAsInt32 = np.int32([polygonStencil])
-	# cv2.polylines(frame, polygonCoordinatesAsInt32, True, (254, 247, 8), 1)
-
-	#
-	# Draw a rectangle around the objects detected via cascade algorithms onto
-	# the frame using the rectangle draw method provide by openCV.
-	#
-
-	for objectClass in detectedObjects:
-		for (x, y, w, h) in objectClass[1]:
-			cv2.putText(frame, objectClass[0], (x, y+h), cv2.FONT_HERSHEY_SIMPLEX, .8, (255, 255, 255), 2)
-			cv2.rectangle(frame, (x, y), (x+w,y+h), color=objectClass[2], thickness=2)
+	except ZeroDivisionError as e:
+		print(e)
+		pass
 
 	#
 	# When s gets pressed, it toggles the 'showPolygonStencil' variable.
