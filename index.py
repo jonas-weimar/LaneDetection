@@ -83,7 +83,7 @@ normalizedFrameSize = (
 bisectionLineYAxis = int(normalizedFrameSize[0] * .5)
 bisectionLineXAxis = int(normalizedFrameSize[1] * .5)
 steeringAdvisorySectionLine = int(normalizedFrameSize[1] * .87)
-detecionLineYCoordinate = int((steeringAdvisorySectionLine + int(normalizedFrameSize[1] * .7)) / 2)
+detecionLineYCoordinate = int((steeringAdvisorySectionLine + int(normalizedFrameSize[1] * .6)) / 2)
 
 #
 # The lane detection takes place in a trapezeoid shaped area as
@@ -92,10 +92,10 @@ detecionLineYCoordinate = int((steeringAdvisorySectionLine + int(normalizedFrame
 #
 
 polygonStencil = np.array([
-	[int(normalizedFrameSize[0] * .2), steeringAdvisorySectionLine],
-	[int(normalizedFrameSize[0] * .4), int(normalizedFrameSize[1] * .7)],
-	[int(normalizedFrameSize[0] * .6), int(normalizedFrameSize[1] * .7)],
-	[int(normalizedFrameSize[0] * .8), steeringAdvisorySectionLine]
+	[int(normalizedFrameSize[0] * .18), steeringAdvisorySectionLine],
+	[int(normalizedFrameSize[0] * .42), int(normalizedFrameSize[1] * .6)],
+	[int(normalizedFrameSize[0] * .58), int(normalizedFrameSize[1] * .6)],
+	[int(normalizedFrameSize[0] * .82), steeringAdvisorySectionLine]
 ])
 
 showPolygonStencil = True
@@ -108,9 +108,9 @@ polygonStencilAsInt32 = np.int32([polygonStencil])
 #
 
 def determineXFromPointsAndY(pts, y):
-			x1, y1, x2, y2 = pts
-			lineGradient = (y2 - y1) / (x2 - x1)
-			return ((y - y1) + (lineGradient * x1)) / lineGradient
+	x1, y1, x2, y2 = pts
+	lineGradient = (y2 - y1) / (x2 - x1)
+	return ((y - y1) + (lineGradient * x1)) / lineGradient
 
 #
 # As long as the camera connection is opened, every second frame is
@@ -158,62 +158,41 @@ while(cap.isOpened()):
 		)
 
 		#
-		# Filter for lines with an absolute angle between 15 and 85 degrees
-		# to enhance lane detection accuracy.
+		# This big loop has three main tasks:
+		# * Filter for lines with an absolute angle between 15 and 85 degrees
+		# 	to enhance lane detection accuracy.
+		# * Draw all chosen lines onto the frame
+		# * Gather all x values of the lines left and right of the car
+		#   at the given detection y coordinate
 		#
 
-		temporaryFilteredLines = []
+		leftXValues = []
+		rightXValues = []
 		for line in houghLinesProbabilityResult:
 			x1, y1, x2, y2 = line[0]
 			angle = (np.arctan2(y2 - y1, x2 - x1) * 180. / np.pi)
 			if abs(angle) > 15 and abs(angle) < 85:
-				temporaryFilteredLines.append(line)
-
-		houghLinesProbabilityResult = temporaryFilteredLines
+				# Draw the line
+				cv2.line(frame, (x1, y1), (x2, y2), (255, 0, 0), 1)
+				# Gather x values for detection line coordinate
+				if x2 < bisectionLineYAxis:
+					leftXValues.append(
+						determineXFromPointsAndY(line[0], detecionLineYCoordinate)
+					)
+				else:
+					rightXValues.append(
+						determineXFromPointsAndY(line[0], detecionLineYCoordinate)
+					)
 
 		#
-		# DEVELOP
+		# To draw our indication lines for lane middle and lane averages,
+		# we first need to calculate their x values from the gathered average
+		# x information.
 		#
-		
-		leftXValues = []
-		rightXValues = []
-		for line in houghLinesProbabilityResult:
-			if line[0][0] < bisectionLineYAxis:
-				leftXValues.append(
-					determineXFromPointsAndY(line[0], detecionLineYCoordinate)
-				)
-			else:
-				rightXValues.append(
-					determineXFromPointsAndY(line[0], detecionLineYCoordinate)
-				)
 
 		leftXAverage = int(sum(leftXValues) / len(leftXValues))
 		rightXAverage = int(sum(rightXValues) / len(rightXValues))
-
-		#
-		# To calculate the approx. lane middle, we take the average of four
-		# X values of our detected lines predicted by the Hough Lines
-		# algortihm.
-		#
-
-		# leftMinX = min(line[0][0] for line in filter(lambda i: i[0][0] < bisectionLineYAxis, houghLinesProbabilityResult))
-		# rightMinX = min(line[0][0] for line in filter(lambda i: i[0][0] > bisectionLineYAxis, houghLinesProbabilityResult))
-		# leftMaxX = max(line[0][2] for line in filter(lambda i: i[0][0] < bisectionLineYAxis, houghLinesProbabilityResult))
-		# rightMaxX = max(line[0][2] for line in filter(lambda i: i[0][0] > bisectionLineYAxis, houghLinesProbabilityResult))
-		
-		# approximateLaneMiddle = int(sum([
-		# 	leftMinX, leftMaxX, rightMinX, rightMaxX
-		# ]) / 4)
 		approximateLaneMiddle = int((leftXAverage + rightXAverage) / 2)
-		
-		#
-		# Draw the detected lines (lane describing lines) onto the frame
-		# using openCV's line method.
-		#
-
-		for line in houghLinesProbabilityResult:
-			x1, y1, x2, y2 = line[0]
-			cv2.line(frame, (x1, y1), (x2, y2), (255, 0, 0), 1)
 
 		#
 		# To indicate the car middle, the lane middle and the distance
@@ -279,7 +258,7 @@ while(cap.isOpened()):
 
 	showPolygonStencil = (cv2.waitKey(1)&0xFF == ord('s')) == (showPolygonStencil ^ True)
 	if showPolygonStencil:
-		cv2.polylines(frame, polygonStencilAsInt32, True, (255,0,0), 1)
+		cv2.polylines(frame, polygonStencilAsInt32, True, (0,255,0), 2)
 
 	#
 	# Show the frame on the screen.

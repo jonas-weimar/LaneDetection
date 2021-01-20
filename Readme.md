@@ -53,8 +53,8 @@ Optional arguments:
 
 ### Run
 ---
-Run the script on your machine either by configuring it by your self (have a look in the Usage section) or by using on of the predefined commands specified in the ```examples```file.
+Run the script on your machine either by configuring it by your self (have a look in the Usage section) or by using on of the predefined commands specified in the ```examples``` file.
 
-Following you see a picture of the script running under the command ```python index.py -v 1 -t 25 -m 40 -g 90```. For more exmaples have a look into the ```images/```folder.
+Following you see a picture of the script running under the command ```python index.py -v 1 -t 25 -m 40 -g 90```. For more exmaples have a look into the ```images/``` folder.
 
 ![Alt Text](https://raw.githubusercontent.com/jonas-weimar/LaneDetection/master/images/Bildschirmfoto%202021-01-15%20um%2018.18.06.png)
