@@ -20,14 +20,14 @@ If we detected lines in the frame we try to calculate the approximate lane middl
 To try this script yourself install it either through:
 1. Download it directly from GitHub
 2. Or use cli
-    + Git - ``` git clone https://github.com/jonas-weimar/LaneDetection.git ```
-    + GitHub - ``` gh repo clone jonas-weimar/LaneDetection ```
+    + via Git - ``` git clone https://github.com/jonas-weimar/LaneDetection.git ```
+    + via GitHub - ``` gh repo clone jonas-weimar/LaneDetection ```
 
 ### Usage
 ---
 ```
 Usage: index.py [-h] [-v CAMERA] [-t THRESHOLD] [-l LINES] [-m MIN_LINE_LENGTH]
-                [-g MAX_LINE_GAP] [-c] [-p]
+                [-g MAX_LINE_GAP]
 
 Optional arguments:
   -h, --help            show this help message and exit
@@ -45,10 +45,6 @@ Optional arguments:
   -g MAX_LINE_GAP, --max-line-gap MAX_LINE_GAP
                         Pass a maximum line gap in px for the HoughLines
                         Probability function. Best used between 40-55.
-  -c, --detect-cars     If flag set, the program will additionally identify cars
-                        via a cascade classifier.
-  -p, --detect-persons  If flag set. The program will additionally identify
-                        persons via a cascade classifier.
 ```
 
 ### Run
@@ -57,4 +53,4 @@ Run the script on your machine either by configuring it by your self (have a loo
 
 Following you see a picture of the script running under the command ```python index.py -v 1 -t 25 -m 40 -g 90```. For more exmaples have a look into the ```images/``` folder.
 
-![Alt Text](https://raw.githubusercontent.com/jonas-weimar/LaneDetection/master/images/Bildschirmfoto%202021-01-15%20um%2018.18.06.png)
+![Alt Text](https://raw.githubusercontent.com/jonas-weimar/LaneDetection/master/images/Bildschirmfoto%202021-01-21%20um%2015.25.52.png)
