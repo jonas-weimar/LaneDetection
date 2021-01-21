@@ -1,7 +1,7 @@
 #
 # Car Extension System - Lane Detection
 #
-# Version: 0.0.1
+# Version: 0.0.2
 # Authors:
 #	- Jonas Weimar <jonas-weimar@web.de>
 #
@@ -11,10 +11,6 @@
 #
 # To run: 'python index.py -v 1 -t 25 -m 40 -g 90' or 'python index.py' for standard settings
 # For Help run: 'python index.py -h'
-#
-# Todo:
-#		- Polystencil middle cut out
-#		- Lane middle calculation is still a bit off
 #
 
 import argparse
@@ -34,8 +30,6 @@ parser.add_argument("-t", "--threshold", help="Pass a threshold for the HoughLin
 parser.add_argument("-l", "--lines", help="Output vector of lines for the HoughLines Probability function. Best used 30.", type=int)
 parser.add_argument("-m", "--min-line-length", help="Pass a minimum line length in px for the HoughLines Probability function. Best used between 25-40.", type=int)
 parser.add_argument("-g", "--max-line-gap", help="Pass a maximum line gap in px for the HoughLines Probability function. Best used between 40-55.", type=int)
-parser.add_argument("-c", "--detect-cars", help="If flag set, the program will additionally identify cars via a cascade classifier.", action="store_true")
-parser.add_argument("-p", "--detect-persons", help="If flag set. The program will additionally identify persons via a cascade classifier.", action="store_true")
 userPassedSettings = parser.parse_args()
 
 #
@@ -49,8 +43,6 @@ programSettings = {
 	"houghLinesVector": userPassedSettings.lines or 30,
 	"houghLinesMinLength": userPassedSettings.min_line_length or 30,
 	"houghLinesMaxGap": userPassedSettings.max_line_gap or 40,
-	"detectCars": userPassedSettings.detect_cars or False,
-	"detectPersons": userPassedSettings.detect_persons or False
 }
 
 #
@@ -61,7 +53,6 @@ programSettings = {
 
 cap = cv2.VideoCapture(
 	programSettings.get("cameraIdentificationNumber")
-	# 'tests/testVideos/IMG_2439.MOV'
 )
 
 #
