@@ -54,3 +54,9 @@ Run the script on your machine either by configuring it by your self (have a loo
 Following you see a picture of the script running under the command ```python index.py -v 1 -t 25 -m 40 -g 90```. For more exmaples have a look into the ```images/``` folder.
 
 ![Alt Text](https://raw.githubusercontent.com/jonas-weimar/LaneDetection/master/images/Bildschirmfoto%202021-01-21%20um%2015.25.52.png)
+
+### Additional
+---
+I wrote this algorithm in python because its easier and faster to write then C or C++. For usages outside of playing around with the mentioned algorithms I would recomend to write the script in a non interpreted language as the speed difference makes a big difference.
+Have fun!🥳
+I wrote this algorithm in python because its easier and faster to write then C or C++. For usages outside of playing around with the mentioned algorithms I would recomend to write the script in a non interpreted language as the speed difference makes a big difference.
