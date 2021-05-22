@@ -58,5 +58,5 @@ Following you see a picture of the script running under the command ```python in
 ### Additional
 ---
 I wrote this algorithm in python because its easier and faster to write then C or C++. For usages outside of playing around with the mentioned algorithms I would recomend to write the script in a non interpreted language as the speed difference makes a big difference.
+
 Have fun!🥳
-I wrote this algorithm in python because its easier and faster to write then C or C++. For usages outside of playing around with the mentioned algorithms I would recomend to write the script in a non interpreted language as the speed difference makes a big difference.
